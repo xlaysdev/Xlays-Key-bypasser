@@ -47,3 +47,8 @@ footer{display:flex;justify-content:space-between;gap:15px;padding:21px 3px 28px
 @keyframes appear{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:560px){.topbar{padding:0 18px;height:66px}.shell{width:min(100% - 28px,760px)}.hero{padding:61px 0 30px}h1{letter-spacing:-2.5px}.panel{padding:21px 17px}.steps{gap:11px}.step{padding:0 3px}.step p{font-size:10px}footer{font-size:8px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+.analysis-label{margin-top:16px;margin-bottom:7px;color:#8f83d4;font:9px 'DM Mono',monospace;letter-spacing:1.5px}
+.destination-url{padding:10px;border:1px solid #30374b;border-radius:8px;background:#101726;line-height:1.6}
+.small-note{font-size:10px!important;color:#7f899e!important;margin:7px 0!important}
+.warning-list{margin:8px 0 0;padding-left:18px;color:#e7bd7a;font-size:11px;line-height:1.8}
