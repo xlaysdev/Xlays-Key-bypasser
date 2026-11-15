@@ -1,6 +1,6 @@
-# Xlays Link Helper
+# Xlays Key Helper
 
-A lightweight, responsive link inspector built with plain HTML, CSS and JavaScript. No framework, build step, API key, or server required.
+A lightweight, responsive URL and link-gate helper built with plain HTML, CSS and JavaScript. No framework, build step, API key, or server required.
 
 **Live preview:** enable GitHub Pages in the repository settings (Settings → Pages → Deploy from a branch → `main` → `/ (root)`).
 
@@ -9,8 +9,10 @@ A lightweight, responsive link inspector built with plain HTML, CSS and JavaScri
 - Responsive dark interface for desktop and mobile.
 - Validates HTTP and HTTPS URLs locally in the browser.
 - Recognizes LootLabs, Linkvertise, and Work.ink hostnames.
-- Shows a provider-specific explanation and opens the original link.
-- Copy URL action with clipboard feedback.
+- Detects common embedded redirect destinations in URL parameters.
+- Finds common tracking parameters and offers a cleaned URL to copy.
+- Flags basic URL warning signs, including HTTP, punycode domains, IP-address hosts, and unusually deep subdomains.
+- Opens the original link or an extracted destination in a new tab.
 - No analytics, tracking, backend, or external link submissions.
 
 ## Run locally
@@ -25,9 +27,9 @@ Then visit http://localhost:8080.
 
 ## Important provider note
 
-This project does **not** defeat, skip, or remove third-party keys, ads, surveys, subscriptions, or access controls. Those requirements are managed by each provider and the link publisher. The helper identifies known provider links and lets the user continue to the original provider page.
+This project does **not** defeat, skip, or remove third-party keys, ads, surveys, subscriptions, or access controls. Those requirements are managed by each provider and the link publisher. The helper can identify known providers and analyze URL structure, but it cannot guarantee that a destination is safe or accessible.
 
-Only open links from sources you trust. A valid URL is not necessarily a safe URL.
+URL analysis is local and heuristic. An extracted redirect destination is not fetched or verified. Only open links from sources you trust.
 
 ## Project structure
 
