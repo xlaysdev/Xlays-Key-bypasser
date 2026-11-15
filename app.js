@@ -35,6 +35,9 @@ function parseUrl(raw) {
   if (!parsed.hostname || !parsed.hostname.includes(".")) {
     throw new Error("Enter a complete domain, like example.com.");
   }
+  if (parsed.username || parsed.password) {
+    throw new Error("Links containing embedded usernames or passwords are blocked.");
+  }
   return parsed;
 }
 
@@ -43,19 +46,19 @@ function identifyProvider(hostname) {
   if (host === "lootlabs.gg" || host.endsWith(".lootlabs.gg")) {
     return {
       name: "LootLabs",
-      message: "This is a LootLabs link. Its key or offer requirements are controlled by LootLabs and the link creator. This tool cannot remove or skip those requirements. You can open the original link and complete its official flow."
+      message: "This is a LootLabs link. Its key or offer requirements are controlled by LootLabs and the link creator. This tool cannot remove or skip those requirements. Continue through the official page."
     };
   }
   if (host === "linkvertise.com" || host.endsWith(".linkvertise.com")) {
     return {
       name: "Linkvertise",
-      message: "This is a Linkvertise link. Any required steps are controlled by the provider and publisher. Continue through the official page if you want to access the destination."
+      message: "This is a Linkvertise link. Any required steps are controlled by the provider and publisher. Continue through the official page."
     };
   }
   if (host === "work.ink" || host.endsWith(".work.ink")) {
     return {
       name: "Work.ink",
-      message: "This appears to be a Work.ink link. Required steps are managed by its provider. Open the original page to continue through its official flow."
+      message: "This appears to be a Work.ink link. Required steps are managed by its provider. Continue through the official page."
     };
   }
   return {
@@ -64,27 +67,130 @@ function identifyProvider(hostname) {
   };
 }
 
+const redirectKeys = new Set(["url", "u", "target", "dest", "destination", "redirect", "redirect_url", "redirect_uri", "link", "continue", "to"]);
+function findEmbeddedDestination(startUrl) {
+  let current = new URL(startUrl.href);
+  for (let depth = 0; depth < 4; depth++) {
+    let next = null;
+    for (const [key, value] of current.searchParams.entries()) {
+      if (!redirectKeys.has(key.toLowerCase())) continue;
+      try {
+        const candidate = new URL(value, current.origin);
+        if (["http:", "https:"].includes(candidate.protocol) && candidate.hostname && candidate.href !== current.href) {
+          next = candidate;
+          break;
+        }
+      } catch {}
+    }
+    if (!next) break;
+    current = next;
+  }
+  return current.href === startUrl.href ? null : current;
+}
+
+const trackingKeys = new Set(["fbclid", "gclid", "dclid", "msclkid", "mc_cid", "mc_eid", "igshid", "ref_src"]);
+function removeTrackingParameters(source) {
+  const cleaned = new URL(source.href);
+  let removed = 0;
+  for (const key of [...cleaned.searchParams.keys()]) {
+    if (key.toLowerCase().startsWith("utm_") || trackingKeys.has(key.toLowerCase())) {
+      cleaned.searchParams.delete(key);
+      removed++;
+    }
+  }
+  return { url: cleaned, removed };
+}
+
+function getWarnings(url) {
+  const warnings = [];
+  const host = url.hostname.toLowerCase();
+  if (url.protocol !== "https:") warnings.push("This link uses HTTP, not encrypted HTTPS.");
+  if (host.startsWith("xn--") || host.split(".").some(part => part.startsWith("xn--"))) {
+    warnings.push("The domain contains internationalized/punycode text. Double-check the spelling.");
+  }
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) warnings.push("This link points directly to an IP address.");
+  if (host.split(".").length > 5) warnings.push("This URL has an unusually deep subdomain.");
+  return warnings;
+}
+
+function addText(parent, tag, className, text) {
+  const element = document.createElement(tag);
+  if (className) element.className = className;
+  element.textContent = text;
+  parent.append(element);
+  return element;
+}
+
+function makeButton(label, className, action) {
+  const button = document.createElement("button");
+  button.className = className;
+  button.type = "button";
+  button.textContent = label;
+  button.addEventListener("click", action);
+  return button;
+}
+
+async function copyText(value, button, originalLabel) {
+  try {
+    await navigator.clipboard.writeText(value);
+    button.textContent = "Copied ✓";
+  } catch {
+    button.textContent = "Copy unavailable";
+  }
+  window.setTimeout(() => { button.textContent = originalLabel; }, 1600);
+}
+
 function showResult(url) {
   const provider = identifyProvider(url.hostname);
   const isGate = provider.name !== "Direct link";
-  result.className = "result" + (isGate ? " warning" : "");
+  const embedded = findEmbeddedDestination(url);
+  const cleaned = removeTrackingParameters(url);
+  const warnings = getWarnings(url);
+
+  result.className = "result" + (isGate || warnings.length ? " warning" : "");
   result.replaceChildren();
 
   const top = document.createElement("div");
   top.className = "result-top";
-  const title = document.createElement("div");
-  title.className = "result-title";
-  title.textContent = isGate ? "Provider detected" : "Link looks valid";
-  const badge = document.createElement("span");
-  badge.className = "provider";
-  badge.textContent = provider.name;
-  top.append(title, badge);
+  addText(top, "div", "result-title", isGate ? "Provider detected" : "Link inspected");
+  addText(top, "span", "provider", provider.name);
+  result.append(top);
+  addText(result, "p", "", provider.message);
+  addText(result, "div", "host", url.hostname);
 
-  const description = document.createElement("p");
-  description.textContent = provider.message;
-  const host = document.createElement("div");
-  host.className = "host";
-  host.textContent = url.hostname;
+  if (embedded) {
+    addText(result, "div", "analysis-label", "EMBEDDED DESTINATION FOUND");
+    addText(result, "div", "host destination-url", embedded.href);
+    addText(result, "p", "small-note", "This destination was read from a URL parameter. It has not been opened or verified.");
+    const destinationActions = document.createElement("div");
+    destinationActions.className = "result-actions";
+    const openDestination = document.createElement("a");
+    openDestination.className = "action-btn action-primary";
+    openDestination.href = embedded.href;
+    openDestination.target = "_blank";
+    openDestination.rel = "noopener noreferrer";
+    openDestination.textContent = "Open extracted destination ↗";
+    destinationActions.append(openDestination);
+    destinationActions.append(makeButton("Copy destination", "action-btn action-secondary", event => copyText(embedded.href, event.currentTarget, "Copy destination")));
+    result.append(destinationActions);
+  }
+
+  if (cleaned.removed > 0) {
+    addText(result, "div", "analysis-label", "TRACKING PARAMETERS");
+    addText(result, "p", "small-note", cleaned.removed + " common tracking parameter(s) found. The cleaned URL keeps the page path and other parameters.");
+    const cleanActions = document.createElement("div");
+    cleanActions.className = "result-actions";
+    cleanActions.append(makeButton("Copy clean URL", "action-btn action-secondary", event => copyText(cleaned.url.href, event.currentTarget, "Copy clean URL")));
+    result.append(cleanActions);
+  }
+
+  if (warnings.length) {
+    addText(result, "div", "analysis-label", "CHECK BEFORE OPENING");
+    const list = document.createElement("ul");
+    list.className = "warning-list";
+    warnings.forEach(warning => addText(list, "li", "", warning));
+    result.append(list);
+  }
 
   const actions = document.createElement("div");
   actions.className = "result-actions";
@@ -94,24 +200,9 @@ function showResult(url) {
   open.target = "_blank";
   open.rel = "noopener noreferrer";
   open.textContent = "Open original link ↗";
-
-  const copy = document.createElement("button");
-  copy.className = "action-btn action-secondary";
-  copy.type = "button";
-  copy.textContent = "Copy URL";
-  copy.addEventListener("click", async () => {
-    try {
-      await navigator.clipboard.writeText(url.href);
-      copy.textContent = "Copied ✓";
-    } catch {
-      copy.textContent = "Copy unavailable";
-    }
-    window.setTimeout(() => { copy.textContent = "Copy URL"; }, 1600);
-  });
-
-  actions.append(open, copy);
-  result.append(top, description, host, actions);
-  result.hidden = false;
+  actions.append(open);
+  actions.append(makeButton("Copy URL", "action-btn action-secondary", event => copyText(url.href, event.currentTarget, "Copy URL")));
+  result.append(actions);
 }
 
 form.addEventListener("submit", event => {
@@ -123,15 +214,12 @@ form.addEventListener("submit", event => {
   } catch (error) {
     result.className = "result warning";
     result.replaceChildren();
-    const title = document.createElement("div");
-    title.className = "result-title";
-    title.textContent = "Could not inspect link";
-    const message = document.createElement("p");
-    message.textContent = error.message;
-    result.append(title, message);
+    addText(result, "div", "result-title", "Could not inspect link");
+    addText(result, "p", "", error.message);
     result.hidden = false;
   } finally {
     inspectButton.disabled = false;
     inspectButton.querySelector("span:first-child").textContent = "Inspect link";
   }
+  result.hidden = false;
 });
