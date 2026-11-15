@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090b12">
+  <meta name="description" content="Xlays Link Helper — inspect, validate and safely open supported links.">
+  <title>Xlays Link Helper</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%237c5cff'/%3E%3Cpath d='M25 28h50L25 72h50' fill='none' stroke='white' stroke-width='10' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="Xlays home"><span class="brand-mark">X</span><span>XLAYS<span class="muted"> / LINK HELPER</span></span></a>
+    <a class="github-link" href="https://github.com/xlaysdev/Xlays-Key-bypasser" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <div class="eyebrow"><span class="pulse"></span> SIMPLE. TRANSPARENT. SAFE.</div>
+      <h1>Make sense of<br><span class="gradient-text">your links.</span></h1>
+      <p class="subtitle">Inspect a link, identify its provider, and continue to the original destination with confidence.</p>
+    </section>
+
+    <section class="panel" aria-labelledby="tool-title">
+      <div class="panel-heading">
+        <div><div class="section-kicker">LINK TOOL</div><h2 id="tool-title">Link inspector</h2></div>
+        <span class="status-pill"><span class="status-dot"></span> READY</span>
+      </div>
+      <form id="link-form" novalidate>
+        <label for="link-input">PASTE YOUR LINK</label>
+        <div class="input-wrap">
+          <span class="input-icon" aria-hidden="true">↗</span>
+          <input id="link-input" name="url" type="text" inputmode="url" autocomplete="url" placeholder="https://example.com/your-link" spellcheck="false" required>
+          <button class="clear-btn" id="clear-btn" type="button" aria-label="Clear link" hidden>×</button>
+        </div>
+        <button class="primary-btn" id="inspect-btn" type="submit"><span>Inspect link</span><span aria-hidden="true">→</span></button>
+      </form>
+      <div id="result" class="result" aria-live="polite" hidden></div>
+      <p class="privacy-note"><span aria-hidden="true">⌑</span> Your link is checked locally in this browser. It is not uploaded to a server.</p>
+    </section>
+
+    <section class="how">
+      <div class="section-kicker">HOW IT WORKS</div>
+      <div class="steps">
+        <article class="step"><span class="step-number">01</span><h3>Paste</h3><p>Add the full URL you want to inspect.</p></article>
+        <article class="step"><span class="step-number">02</span><h3>Identify</h3><p>See the host and whether it is a supported provider.</p></article>
+        <article class="step"><span class="step-number">03</span><h3>Continue</h3><p>Open the original link or copy it for later.</p></article>
+      </div>
+    </section>
+    <footer><span>© <span id="year"></span> XLAYS DEV</span><span>Built for clarity, not fake promises.</span></footer>
+  </main>
+</body>
+</html>
